@@ -1,10 +1,10 @@
 import datetime as dt
 
-from adapters.output import save_images_as_gif
-from config import get_config
-from services.image import get_base_image
-from services.palettes import get_current_palette
-from services.sun import get_sun_position
+from cartoon_sun_position.adapters.output import save_images_as_gif
+from cartoon_sun_position.config import get_config
+from cartoon_sun_position.services.image import get_base_image
+from cartoon_sun_position.services.palettes import get_current_palette
+from cartoon_sun_position.services.sun import get_sun_position
 
 
 def create_gif():

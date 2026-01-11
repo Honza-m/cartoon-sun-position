@@ -1,10 +1,10 @@
 import datetime as dt
 
-from adapters.output import save_image
-from config import get_config
-from services.image import add_sunrise_sunset_info, get_base_image
-from services.palettes import get_current_palette
-from services.sun import get_sun_position
+from cartoon_sun_position.adapters.output import save_image
+from cartoon_sun_position.config import get_config
+from cartoon_sun_position.services.image import add_sunrise_sunset_info, get_base_image
+from cartoon_sun_position.services.palettes import get_current_palette
+from cartoon_sun_position.services.sun import get_sun_position
 
 
 def create_current_image():

@@ -1,13 +1,13 @@
 from pathlib import Path
 
-from schemas import Palette
+from cartoon_sun_position.schemas import Palette
 
 BASE_PATH = Path(__file__).parent
 BACK_IMG = BASE_PATH / Path("./static/bitmaps/mountain_back.png")
 MID_IMG = BASE_PATH / Path("./static/bitmaps/mountain_mid.png")
 FRONT_IMG = BASE_PATH / Path("./static/bitmaps/mountain_front.png")
 
-OUTPUT_DIR = BASE_PATH / Path("./output")
+OUTPUT_DIR = Path("./output")
 
 LOW_SUN_TIME = 1
 LOW_SUN_COLOURS: list[Palette] = [

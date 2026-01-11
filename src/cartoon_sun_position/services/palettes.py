@@ -1,15 +1,15 @@
 import datetime as dt
 from typing import TypeVar
 
-from constants import (
+from cartoon_sun_position.constants import (
     DAYTIME_COLOUR,
     LOW_SUN_COLOURS,
     LOW_SUN_TIME,
     NIGHT_COLOUR,
     TWILIGHT_COLOURS,
 )
-from schemas import Config, Palette
-from utils import get_time_as_pct
+from cartoon_sun_position.schemas import Config, Palette
+from cartoon_sun_position.utils import get_time_as_pct
 
 T = TypeVar("T")
 

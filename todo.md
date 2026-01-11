@@ -1,0 +1,2 @@
+- Cache homeassistant config
+- Generate a sun position/palette file together with the image to check if image has/needs to change

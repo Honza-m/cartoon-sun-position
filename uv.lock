@@ -5,7 +5,7 @@ requires-python = ">=3.13"
 [[package]]
 name = "cartoon-sun-position"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "pillow" },
     { name = "python-dotenv" },
@@ -14,7 +14,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "pillow", specifier = ">=12.1.0" },
+    { name = "pillow", specifier = ">=11.0.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "requests", specifier = ">=2.32.5" },
 ]

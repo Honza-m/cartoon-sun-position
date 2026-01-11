@@ -4,7 +4,7 @@ import os
 import requests
 from dotenv import load_dotenv
 
-from schemas import Config
+from cartoon_sun_position.schemas import Config
 
 
 def download_config() -> Config:

@@ -2,7 +2,7 @@ import os
 
 from PIL import Image
 
-from constants import OUTPUT_DIR
+from cartoon_sun_position.constants import OUTPUT_DIR
 
 
 def save_image(canvas: Image.Image):

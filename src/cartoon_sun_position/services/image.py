@@ -1,8 +1,15 @@
 from PIL import Image, ImageColor, ImageDraw, ImageFont
 
-from constants import BACK_IMG, FONT_HOURS, FRONT_IMG, MID_IMG, SUN_COLOR, SUN_RADIUS
-from schemas import Config, Coor, Palette
-from utils import adjust, colorize_mask, vertical_gradient_rgb
+from cartoon_sun_position.constants import (
+    BACK_IMG,
+    FONT_HOURS,
+    FRONT_IMG,
+    MID_IMG,
+    SUN_COLOR,
+    SUN_RADIUS,
+)
+from cartoon_sun_position.schemas import Config, Coor, Palette
+from cartoon_sun_position.utils import adjust, colorize_mask, vertical_gradient_rgb
 
 
 def get_base_image(palette: Palette, sun_position: Coor | None) -> Image.Image:

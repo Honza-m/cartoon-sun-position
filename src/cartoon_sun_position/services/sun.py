@@ -1,8 +1,8 @@
 import datetime as dt
 
-from constants import SUN_ARC_HEIGHT, SUNRISE_COOR, SUNSET_COOR
-from schemas import Config, Coor
-from utils import get_time_as_pct, lerp
+from cartoon_sun_position.constants import SUN_ARC_HEIGHT, SUNRISE_COOR, SUNSET_COOR
+from cartoon_sun_position.schemas import Config, Coor
+from cartoon_sun_position.utils import get_time_as_pct, lerp
 
 
 def get_sun_position(ct: dt.time, cfg: Config) -> Coor | None:
