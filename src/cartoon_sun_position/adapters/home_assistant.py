@@ -8,9 +8,11 @@ from cartoon_sun_position.schemas import Config
 
 
 def download_config() -> Config:
+    """The Home Assistant sun entity has data for "next" dawn and dusk. We just ignore that, tomorrow will be close enough to today. Cache the results each morning to get the corret day's data."""
     load_dotenv()
     hass_url = os.environ.get("HASS_URL")
     hass_auth_header = os.environ.get("HASS_AUTH_HEADER")
+
     if not hass_url or not hass_auth_header:
         raise ValueError(
             "HASS_URL and HASS_AUTH_HEADER must be set as environment variables"
@@ -18,9 +20,10 @@ def download_config() -> Config:
 
     date_format_s = "%Y-%m-%dT%H:%M:%S%z"
     date_format_ms = "%Y-%m-%dT%H:%M:%S.%f%z"
-    r = requests.get(hass_url, headers={"Authorization": hass_auth_header})
+    r = requests.get(hass_url, headers={"Authorization": hass_auth_header}, timeout=10)
     r.raise_for_status()
     data = next((x["attributes"] for x in r.json() if x["entity_id"] == "sun.sun"), {})
+
     return Config(
         dawn=dt.datetime.strptime(data["next_dawn"], date_format_ms).time(),
         dusk=dt.datetime.strptime(data["next_dusk"], date_format_ms).time(),

@@ -28,5 +28,4 @@ The package isn't published anywhere, but you can install it as a local dependen
 
 
 ## TODO
-- Cache homeassistant config
 - Generate a sun position/palette file together with the image to check if image has/needs to change
