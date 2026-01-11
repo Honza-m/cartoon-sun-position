@@ -1,3 +1,0 @@
-- Cache homeassistant config
-- Generate a sun position/palette file together with the image to check if image has/needs to change
-- Reorganise files to make it make sense as a package. e.g. from cartoon_sun_position import generate
