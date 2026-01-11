@@ -1,5 +1,5 @@
-from cartoon_sun_position.application.current_image import create_current_image
+from cartoon_sun_position.application.current_image import generate_to_file
 
 
 def main():
-    create_current_image()
+    generate_to_file()

@@ -7,7 +7,7 @@ from cartoon_sun_position.services.palettes import get_current_palette
 from cartoon_sun_position.services.sun import get_sun_position
 
 
-def create_gif():
+def generate_gif_to_file():
     cfg = get_config()
     frames = []
     for h in range(6, 17):
