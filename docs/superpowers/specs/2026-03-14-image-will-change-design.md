@@ -24,9 +24,9 @@ if image_will_change():
 
 ## When the Image Is Actually Stable
 
-- **Deep night** (`ct < cfg["dawn"] or ct >= cfg["dusk"]`): palette is `NIGHT_COLOUR` (fixed constant), sun position is `None` → stable hash, `image_will_change()` returns `False` → display skipped. Note: `get_sun_position()` uses `ct > cfg["setting"]` (strict), so at exactly `ct == cfg["setting"]` sun position is still defined — but by that point the palette boundary (`ct >= cfg["dusk"]`) ensures the overall hash is stable regardless.
-- **Midnight config rollover:** the config cache invalidates at midnight, fetching new `rising`/`setting` times. The hash will differ from the previous day's and `image_will_change()` correctly returns `True` for the first post-midnight run.
-- **Daytime**: sun position is a continuous `(x, y)` function of time (integer-truncated), so the hash changes on most runs. At slow-moving extremes near rise/set, pixel coordinates could be identical across consecutive runs — a minor false negative that skips a negligible redraw. Expected behaviour.
+- **Deep night** (`ct < cfg["dawn"] or ct >= cfg["dusk"]`): palette is `NIGHT_COLOUR` (fixed constant), sun position is `None` → stable hash, `image_will_change()` returns `False` → display skipped. Note: `get_sun_position()` uses `ct > cfg["setting"]` (strict `>`), while `get_current_palette()` uses `ct >= cfg["dusk"]`. These boundaries don't coincide — between `setting` and `dusk` both are still changing. The stable-night claim holds for the bulk of the night window where the conditions overlap.
+- **Midnight config rollover:** the config cache invalidates at midnight, fetching new values. The full-config hash will differ and `image_will_change()` correctly returns `True`.
+- **Daytime**: sun position changes continuously (integer-truncated `(x, y)`), so the hash changes on most runs. At slow-moving extremes near rise/set, coordinates could be identical across runs — a minor false negative skipping a negligible redraw. Expected.
 - **Twilight / low-sun windows**: palette transitions through multiple steps, hash changes. Expected.
 
 The primary benefit is eliminating unnecessary display redraws during the night.
@@ -35,35 +35,39 @@ The primary benefit is eliminating unnecessary display redraws during the night.
 
 ### Hash inputs
 
-The hash covers all inputs that determine the rendered image:
+The hash covers the **entire `Config`** (since it is fully passed to `generate_image()`), plus `palette` and `sun_position`:
 
+- `cfg` — all fields: `dawn`, `dusk`, `midnight`, `noon`, `rising`, `setting`, `valid_for`
 - `palette` — `tuple[str, str, str]` from `get_current_palette()`
 - `sun_position` — `tuple[int, int] | None` from `get_sun_position()`
-- `cfg["rising"]` and `cfg["setting"]` formatted as `"%H:%M"` — matching how `add_sunrise_sunset_info()` renders them as text on the image
 
-Hash: `SHA-256(str((palette, sun_position, rising_str, setting_str)))`. `str()` is stable because `Palette` is a plain `tuple[str, str, str]` and `sun_position` is `tuple[int, int] | None` — simple types with deterministic `repr`.
+Hash: `SHA-256(str((cfg, palette, sun_position)))`. `str()` is stable: `Config` is a `TypedDict` so `str(cfg)` produces a dict repr whose insertion order is stable in Python 3.7+. All values are `dt.time`, `dt.date`, or `None` — simple types with deterministic `repr`. Same for `Palette` (`tuple[str, str, str]`) and `Coor` (`tuple[int, int] | None`).
+
+### Shared adapter: `adapters/hash_cache.py`
+
+Both `image_will_change()` and `generate_image()` need access to the hash cache. The file I/O is extracted into a new adapter following the existing adapter pattern:
+
+- `read_hash() -> str | None` — reads `/tmp/cartoon_sun_position_hash_cache`, returns the stored hex digest or `None` on any error
+- `write_hash(digest: str)` — writes the hex digest to `/tmp/cartoon_sun_position_hash_cache`, silently ignores write errors
 
 ### New module: `application/image_hash.py`
 
-Two functions:
-
-**`_get_current_hash() -> str`** (private, underscore-prefixed)
-- Calls `get_config()` first, then samples `datetime.datetime.now().time()` — same order as `current_image.py`
-- Calls `get_current_palette(ct, cfg)` and `get_sun_position(ct, cfg)`
-- Returns SHA-256 of `str((palette, sun_position, cfg["rising"].strftime("%H:%M"), cfg["setting"].strftime("%H:%M")))`
+One function:
 
 **`image_will_change() -> bool`**
-- Computes current hash via `_get_current_hash()`
-- Reads `/tmp/cartoon_sun_position_hash_cache`
-- If cache missing or hash differs: writes new hash to cache, returns `True`
-- If hash matches: returns `False`
-- On any read or write error: returns `True` (safe default — better to redraw than to skip)
+- Calls `get_config()`, then `ct = datetime.datetime.now().time()` (same order as `current_image.py`)
+- Computes `palette`, `sun_position`, and hash (`SHA-256(str((cfg, palette, sun_position)))`)
+- Reads stored hash via `adapters/hash_cache.read_hash()`
+- Returns `True` if stored hash is `None` or differs from current hash
+- Returns `False` if hashes match
+- Does **not** write the hash — that is `generate_image()`'s responsibility
 
-No `__all__` needed — existing application modules don't define it. The underscore prefix on `_get_current_hash` prevents it from being star-imported.
+### Updated: `application/current_image.py`
 
-### Cache file
+`generate_image()` gains one responsibility after rendering:
 
-`/tmp/cartoon_sun_position_hash_cache` — plain text, one line, the SHA-256 hex digest. Follows the same `/tmp` pattern as the existing config cache.
+- Before returning, at the end of the function body, calls `adapters/hash_cache.write_hash(digest)` with the same hash inputs used by `image_will_change()`
+- Hash computation is duplicated minimally in both modules (same three lines: palette, sun, digest). No shared helper needed — the inputs are already computed as part of each function's normal flow.
 
 ### Export
 
@@ -71,19 +75,18 @@ No `__all__` needed — existing application modules don't define it. The unders
 
 ## Accepted Limitations
 
-**TOCTOU:** `image_will_change()` and `generate_image()` both call `datetime.now().time()` independently. At a palette or sun-position boundary, the two calls could land on opposite sides. Accepted — this results in an extra redraw, not a skipped one.
-
-**Write-before-render:** The hash is written before `generate_image()` is called. If the render or display step fails, the cache holds the hash of an image never shown. During daytime the display self-corrects on the next run as the hash advances. At night — the primary use case — the hash is stable, so a failed render leaves the display stale until dawn. Accepted — render failures are rare.
+**TOCTOU:** `image_will_change()` and `generate_image()` both call `datetime.now().time()` independently. At a palette or sun-position boundary, the two calls could land on opposite sides, producing a mismatched hash written to cache. Accepted — this results in at most one extra redraw on the next run, not a skipped one.
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
+| `src/cartoon_sun_position/adapters/hash_cache.py` | New |
 | `src/cartoon_sun_position/application/image_hash.py` | New |
+| `src/cartoon_sun_position/application/current_image.py` | Write hash after render |
 | `src/cartoon_sun_position/__init__.py` | Add star import |
 
 ## Out of Scope
 
-- No changes to `generate_image()` or the rendering pipeline
+- No changes to `generate_image()`'s return value or rendering pipeline
 - No GIF support for change detection
-- No hash persistence in adapters layer (follows existing `config.py` inline pattern)
