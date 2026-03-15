@@ -67,7 +67,7 @@ One function:
 `generate_image()` gains one responsibility after rendering:
 
 - Before returning, at the end of the function body, calls `adapters/hash_cache.write_hash(digest)` with the same hash inputs used by `image_will_change()`
-- Hash computation is duplicated minimally in both modules (same three lines: palette, sun, digest). No shared helper needed — the inputs are already computed as part of each function's normal flow.
+- Hash computation is shared via `_compute_image_hash(cfg, palette, sun) -> str` in `adapters/hash_cache.py`, imported by both modules
 
 ### Export
 
@@ -81,7 +81,7 @@ One function:
 
 | File | Change |
 |------|--------|
-| `src/cartoon_sun_position/adapters/hash_cache.py` | New |
+| `src/cartoon_sun_position/adapters/hash_cache.py` | New (with `_compute_image_hash` helper) |
 | `src/cartoon_sun_position/application/image_hash.py` | New |
 | `src/cartoon_sun_position/application/current_image.py` | Write hash after render |
 | `src/cartoon_sun_position/__init__.py` | Add star import |
