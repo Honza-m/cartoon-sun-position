@@ -1,7 +1,9 @@
 import datetime as dt
+import hashlib
 
 from PIL import Image
 
+from cartoon_sun_position.adapters.hash_cache import write_hash
 from cartoon_sun_position.adapters.output import save_image
 from cartoon_sun_position.config import get_config
 from cartoon_sun_position.services.image import add_sunrise_sunset_info, get_base_image
@@ -21,6 +23,10 @@ def generate_image() -> Image.Image:
     print("Creating image")
     image = get_base_image(palette, sun)
     image = add_sunrise_sunset_info(image, cfg)
+
+    digest = hashlib.sha256(str((cfg, palette, sun)).encode()).hexdigest()
+    write_hash(digest)
+
     return image
 
 
