@@ -1,4 +1,5 @@
 import datetime as dt
+import hashlib
 
 from PIL import Image, ImageColor
 
@@ -63,3 +64,7 @@ def get_time_as_pct(
     current_seconds = time_to_seconds(current_time)
 
     return (current_seconds - start_seconds) / (end_seconds - start_seconds)
+
+
+def compute_image_hash(cfg, palette, sun) -> str:
+    return hashlib.sha256(str((cfg, palette, sun)).encode()).hexdigest()
